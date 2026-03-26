@@ -10,11 +10,26 @@ app.use(express.json());
 // Configuration DB
 // =======================
 
-const pool = new Pool({});
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: parseInt(process.env.DB_PORT || "5432"),
+});
 
 // =======================
-// Healthcheck 
+// Healthcheck
 // =======================
+
+app.get("/health", async (_, res) => {
+  try {
+    await pool.query("SELECT 1");
+    res.json({ status: "ok", db: "connected" });
+  } catch (err) {
+    res.status(503).json({ status: "error", db: "unreachable" });
+  }
+});
 
 // =======================
 // CRUD NOTES
@@ -81,7 +96,7 @@ app.delete("/notes/:id", async (req, res) => {
 // Start server
 // =======================
 
-let port = 3000;
+const port = parseInt(process.env.PORT || "3000");
 
 app.listen(port, () => {
   console.log(`API running on port ${port}`);
