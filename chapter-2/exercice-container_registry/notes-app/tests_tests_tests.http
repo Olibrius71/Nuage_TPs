@@ -1,0 +1,20 @@
+###
+POST http://localhost:3000/notes/
+Content-Type: application/json
+
+{
+  "title":"Note modifiée",
+  "content":"nouveau contenu"
+}
+
+###
+PUT http://localhost:3000/notes/122
+Content-Type: application/json
+
+{
+  "title": "",
+  "content":"nouveau contenu"
+}
+
+###
+GET http://localhost:3000/notes/

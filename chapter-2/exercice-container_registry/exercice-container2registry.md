@@ -33,12 +33,16 @@ docker images | grep notes-api
 #### Question de réflexion
 > Pourquoi une image locale ne suffit pas ?
 
+--> je sais pas
+
 ### Étape 1.2 — Login
 ```bash
 docker login
 ```
 #### Question de réflexion 
 > Pourquoi faire la commande `docker login` ? 
+
+--> car il faut être loggué sur Docker Hub pour récupérer des images en ligne
 
 ### Étape 1.3 — Tag
 
@@ -55,6 +59,8 @@ docker tag notes-api <username>/notes-api:v1
 #### Question de réflexion 
 > Quelles différences y a-t-il entre `docker tag` et `docker build` ?
 
+--> je sais pas
+
 ### Étape 1.4 — Push
 ```bash
 docker push <username>/notes-api:v1
@@ -62,6 +68,8 @@ docker push <username>/notes-api:v1
 
 #### Question de réflexion 
 > Que ce qui se passe réellement avec un `docker push` ?
+
+--> ça publie notre image sur Docker Hub
 
 #### Observations
 - Sur Docker Hub : le repository `<username>/notes-api` existe
@@ -75,6 +83,8 @@ image: <username>/notes-api:v1
 ```
 
 Puis démarrer l’application avec `docker compose up` (ou en arrière-plan :`docker compose up -d`)
+
+--> G u besoin de créer un fichier .env et de renseigner les noms des var dans le dock compose
 
 Créer une note :
 
@@ -190,6 +200,8 @@ app.put("/notes/:id", async (req, res) => {
 #### Questions de réflexion
 > Peut-on modifier directement l’image `v1` déjà déployée ?
 
+--> Nn, c pas comme ça que ça marche
+
 ### Étape 2.2 — Build + Tag + Push
 ```bash
 docker build -t notes-api .
@@ -204,6 +216,8 @@ Pour inspecter le manifest :
 ```bash
 docker buildx imagetools inspect <image_name>:<version>
 ```
+
+![img.png](img.png)
 
 Si `Platform: linux/amd64` ne figure pas, alors il faudra lancer :
 ```bash
@@ -268,3 +282,5 @@ curl -X PUT http://localhost:3000/notes/1 \
 
 #### Question de réflexion 
 > Pourquoi la solution suivante n’est-elle pas valable dans le Cloud ?
+
+--> je sais pas

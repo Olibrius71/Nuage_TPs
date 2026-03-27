@@ -1,17 +1,35 @@
 services:
-  api:
-    image: maximefgt/notes-api:v1
-    ports:
-      - "3000:3000"
-    env_file:
-      - .env
+    api:
+        image: jesusuakbar/notes-api:v2
+        ports:
+            - "${PORT:-3000}:3000"
+        environment:
+            - DB_HOST=db
+            - DB_USER=${DB_USER}
+            - DB_PASSWORD=${DB_PASSWORD}
+            - DB_NAME=${DB_NAME}
+            - DB_PORT=${DB_PORT:-5432}
+            - PORT=${PORT:-3000}
+        depends_on:
+            db:
+                condition: service_healthy
+        restart: unless-stopped
 
-  db:
-    image: postgres:15
-    env_file:
-      - .env
-    volumes:
-      - db-data:/var/lib/postgresql/data
+    db:
+        image: postgres:16-alpine
+        environment:
+            - POSTGRES_USER=${DB_USER}
+            - POSTGRES_PASSWORD=${DB_PASSWORD}
+            - POSTGRES_DB=${DB_NAME}
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+            - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+        restart: unless-stopped
 
 volumes:
-  db-data:
+    postgres_data:
