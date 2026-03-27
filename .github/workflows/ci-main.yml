@@ -1,9 +1,9 @@
-name: Main - CI (test, build & push)
+name: Master - CI (test, build & push)
 
 on:
   push:
     branches:
-      - main
+      - master
 
 permissions:
   contents: read
