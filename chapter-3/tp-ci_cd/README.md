@@ -1,51 +1,71 @@
 # tp-ci_cd
 
-## 🚀 Release Process
+## Partie 4 — Questions
 
-This project follows a strict versioning and release workflow to ensure traceability and reproducibility.
+**Pourquoi `latest` n'est pas une version ?**
+`latest` est un tag mobile — il pointe sur le dernier build poussé. Si on pull `latest` aujourd'hui et dans 3 semaines, on a aucune garantie d'avoir la même image. C'est pratique en dev, mais pas viable en prod.
 
-### 🔁 Continuous Integration (on push to `master`)
+**Différence tag vs digest ?**
+Un tag (`:v1.0.0`, `:latest`) est un alias modifiable — on peut le faire pointer sur une autre image. Un digest (`sha256:abc123...`) est l'empreinte cryptographique du contenu de l'image, immuable. Pour de la vraie traçabilité, c'est le digest qui compte.
 
-Every push to `master` triggers the `ci-main` workflow:
+**Pourquoi séparer staging/prod ?**
+Pour ne pas pousser directement en prod sans valider dans un environnement proche. Si un bug passe les tests mais casse au runtime, staging l'attrape avant que ça touche les utilisateurs.
 
-- Runs the test suite with Vitest
-- If tests pass: builds the Docker image and pushes two tags to Docker Hub:
-  - `latest` — points to the most recent build on master
-  - `<git-sha>` — immutable reference tied to the exact commit
+**Pourquoi une version `vX.Y.Z` ne doit jamais être reconstruite ?**
+Parce qu'une même version doit toujours correspondre au même artefact. Si on rebuilde `v1.0.0`, l'image change mais le tag reste identique — ce qui casse la reproductibilité et la confiance dans le versioning.
 
-The build step is skipped entirely if tests fail, so `master` stays deployable at all times.
+**Avantages d'une PR gate ?**
+- On merge que du code qui passe les tests
+- Ça force la relecture
+- `master` reste toujours dans un état déployable
+- On isole les features en cours des autres
 
-### 🏷 Creating a Release (Versioned Product)
+**Qu'est-ce qui garantit la traçabilité ici ?**
+Le tag `<sha>` du commit GitHub sur chaque image Docker. On peut partir d'une image en prod, retrouver le SHA, et remonter exactement au commit qui l'a produite — et donc au code, aux tests qui ont tourné, et à la PR d'origine.
 
-To cut a release:
 
-1. Make sure `master` is in the desired state (all features merged, CI green)
-2. Create and push a Git tag:
+## Partie 5 — Release Process
+
+### Intégration continue 
+
+Chaque push sur `master` déclenche le workflow `ci-main` :
+
+- Il lance les tests avec Vitest
+- Si les tests passent : il build l'image Docker et pousse deux tags sur Docker Hub :
+  - `latest` — pointe toujours sur le dernier build de master
+  - `<git-sha>` — référence immuable liée exactement au commit
+
+Si les tests échouent, le build ne se lance pas — `master` reste toujours dans un état déployable.
+
+### Créer une release 
+
+1. S'assurer que `master` est dans l'état voulu (CI verte, tout mergé)
+2. Créer et pousser un tag Git :
    ```bash
    git tag v1.2.3
    git push origin v1.2.3
    ```
-3. The `release` workflow triggers automatically and pushes `notes-app:v1.2.3` to Docker Hub
+3. Le workflow `release` se déclenche automatiquement et pousse `notes-app:v1.2.3` sur Docker Hub
 
-No manual build needed — the tag push is the trigger.
+Pas de build manuel — le push du tag suffit.
 
-### 📌 Versioning Rules
+### Règles de versioning
 
-We follow [Semantic Versioning](https://semver.org/):
+On suit le [Semantic Versioning](https://semver.org/) :
 
-- `vMAJOR.MINOR.PATCH`
-- **MAJOR**: breaking change
-- **MINOR**: new feature, backwards-compatible
-- **PATCH**: bug fix
+- `vMAJEUR.MINEUR.PATCH`
+- **MAJEUR** : changement cassant
+- **MINEUR** : nouvelle feature, rétrocompatible
+- **PATCH** : correction de bug
 
-A version tag is **never rebuilt**. Once `v1.2.3` is pushed, that image is frozen. If a fix is needed, a new tag (`v1.2.4`) is created.
+Un tag de version n'est jamais reconstruit. Une fois `v1.2.3` poussé, l'image est figée. Si un fix est nécessaire, on crée un nouveau tag (`v1.2.4`).
 
-### 🔎 Traceability
+### Traçabilité
 
-Every Docker image pushed from CI carries a `<git-sha>` tag. This allows to:
+Chaque image poussée depuis la CI porte un tag `<git-sha>`. Ça permet de :
 
-- Identify exactly which commit produced an image running in any environment
-- Cross-reference with the GitHub PR and test run that validated the code
-- Reproduce the exact same build at any point in time
+- Retrouver exactement quel commit a produit une image qui tourne en prod
+- Croiser avec la PR et les tests qui ont validé ce code
+- Reproduire le même build à n'importe quel moment
 
-`latest` is never used in production deployments — always pin to a `vX.Y.Z` or `<sha>` tag.
+On n'utilise jamais `latest` en prod — on épingle toujours sur un tag `vX.Y.Z` ou `<sha>`.
