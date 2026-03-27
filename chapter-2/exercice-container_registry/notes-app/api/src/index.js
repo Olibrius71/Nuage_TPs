@@ -36,6 +36,23 @@ async function waitForDb(retries = 5, delay = 3000) {
 
 waitForDb();
 
+function isNonEmptyString(v) {
+  return typeof v === "string" && v.trim().length > 0;
+}
+
+function isStringOrUndefined(v) {
+  return v === undefined || typeof v === "string";
+}
+
+function parseId(req, res) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid id. Expected a positive integer." });
+    return null;
+  }
+  return id;
+}
+
 // =======================
 // Healthcheck
 // =======================
@@ -90,6 +107,42 @@ app.get("/notes/:id", async (req, res) => {
     return res.status(404).json({ error: "note not found" });
   }
 
+  res.json(result.rows[0]);
+});
+
+app.put("/notes/:id", async (req, res) => {
+  const id = parseId(req, res);
+  if (id === null) return;
+  
+  const { title, content } = req.body;
+  
+  if (!isNonEmptyString(title)) {
+    return res.status(400).json({
+      error: "title is required and must be a non-empty string",
+    });
+  }
+  
+  if (!isStringOrUndefined(content)) {
+    return res.status(400).json({
+      error: "content must be a string if provided",
+    });
+  }
+  
+  const result = await pool.query(
+    `
+    UPDATE notes
+    SET title = $1,
+        content = $2
+    WHERE id = $3
+    RETURNING *
+    `,
+    [title.trim(), content ?? "", id]
+  );
+  
+  if (result.rows.length === 0) {
+    return res.status(404).json({ error: "note not found" });
+  }
+  
   res.json(result.rows[0]);
 });
 
