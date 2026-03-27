@@ -1,6 +1,6 @@
 services:
   api:
-    image: maximefgt/notes-api:v1
+    build: ./api
     ports:
       - "3000:3000"
     env_file:
